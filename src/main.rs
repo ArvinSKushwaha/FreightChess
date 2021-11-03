@@ -29,9 +29,9 @@ const GET_LEFT: fn(u8) -> u8 = |s: u8| (s & LEFT_MASK) >> 4;
 const GET_RIGHT: fn(u8) -> u8 = |s: u8| s & RIGHT_MASK;
 
 const GET_NUM: fn(u8) -> u8 = |s: u8| s & 0b0111;
-const GET_COLOR: fn(u8) -> u8 = |s: u8| s & BLACK;
+const GET_COLOR: fn(u8) -> u8 = |s: u8| (s & BLACK) >> 3;
 
-const SET_BLACK: fn(u8) -> u8 = |s: u8| s | BLACK;
+const SET_BLACK: fn(u8) -> u8 = |s: u8| (s | BLACK) * (s != EMPTY) as u8;
 const SET_WHITE: fn(u8) -> u8 = |s: u8| s & !BLACK;
 
 const GET_CELL_PAIR: fn(u8) -> (u8, u8) = |pair: u8| (GET_LEFT(pair), GET_RIGHT(pair));
@@ -42,21 +42,12 @@ const SET_LEFT: fn(u8, u8) -> u8 = |pair: u8, left: u8| SET_CELL_PAIR(left, GET_
 const SET_RIGHT: fn(u8, u8) -> u8 = |pair: u8, right: u8| SET_CELL_PAIR(GET_LEFT(pair), right);
 
 // If the boolean is true, get the right piece, otherwise, get the left piece.
-const GET_CELL_BOOLEAN: fn(u8, bool) -> u8 = |pair: u8, side: bool| {
-    if side {
-        GET_RIGHT(pair)
-    } else {
-        GET_LEFT(pair)
-    }
-};
+const GET_CELL_BOOLEAN: fn(u8, bool) -> u8 =
+    |pair: u8, side: bool| GET_RIGHT(pair) * (side as u8) + GET_LEFT(pair) * (!side as u8);
 
 // If the boolean is true, set the right piece, otherwise, set the left piece.
 const SET_CELL_BOOLEAN: fn(u8, bool, u8) -> u8 = |pair: u8, side: bool, piece: u8| {
-    if side {
-        SET_RIGHT(pair, piece)
-    } else {
-        SET_LEFT(pair, piece)
-    }
+    SET_RIGHT(pair, piece) * (side as u8) + SET_LEFT(pair, piece) * (!side as u8)
 };
 
 pub fn get_app() -> App<'static> {
@@ -76,6 +67,7 @@ pub fn get_app() -> App<'static> {
         )
 }
 
+#[derive(Debug)]
 enum ChessErr {
     InvalidIndexing(&'static str),
     BadMove(&'static str),
@@ -105,7 +97,8 @@ struct ChessBoard {
     /// The color values are as follows (White Empty Squares and Black Empty Squares both have color 0):
     /// - White: 0
     /// - Black: 1
-    pub board: [[u8; 4]; 8],
+    board: [[u8; 4]; 8],
+    moves: u16, // Theoretical maximum move count (with the FIDE limits) is somewhere around 6000, iirc?
 }
 
 impl ChessBoard {
@@ -114,7 +107,7 @@ impl ChessBoard {
         ChessBoard {
             board: [
                 [
-                    SET_CELL_PAIR(SET_WHITE(KNIGHT), SET_WHITE(ROOK)),
+                    SET_CELL_PAIR(SET_WHITE(ROOK), SET_WHITE(KNIGHT)),
                     SET_CELL_PAIR(SET_WHITE(BISHOP), SET_WHITE(QUEEN)),
                     SET_CELL_PAIR(SET_WHITE(KING), SET_WHITE(BISHOP)),
                     SET_CELL_PAIR(SET_WHITE(KNIGHT), SET_WHITE(ROOK)),
@@ -136,12 +129,13 @@ impl ChessBoard {
                     SET_CELL_PAIR(SET_BLACK(PAWN), SET_BLACK(PAWN)),
                 ],
                 [
-                    SET_CELL_PAIR(SET_BLACK(KNIGHT), SET_BLACK(ROOK)),
+                    SET_CELL_PAIR(SET_BLACK(ROOK), SET_BLACK(KNIGHT)),
                     SET_CELL_PAIR(SET_BLACK(BISHOP), SET_BLACK(QUEEN)),
                     SET_CELL_PAIR(SET_BLACK(KING), SET_BLACK(BISHOP)),
                     SET_CELL_PAIR(SET_BLACK(KNIGHT), SET_BLACK(ROOK)),
                 ],
             ],
+            moves: 0,
         }
     }
 
@@ -177,7 +171,7 @@ impl ChessBoard {
         // Go ahead and perform the move for now.
         let piece = self.get_piece_at_bytes(move_from)?;
         self.set_piece_at_bytes(move_to, piece)?;
-        todo!(); // TODO: Add move checking and performing.
+        todo!();
     }
 
     pub fn is_done(&self) -> bool {
@@ -305,6 +299,37 @@ fn test_get_piece_at() {
     assert!(ChessBoard::new()
         .get_piece_at_bytes("a0".as_bytes())
         .is_err());
+
+    let board = ChessBoard::new();
+    let a1_piece = board
+        .get_piece_at_bytes("a1".as_bytes())
+        .expect("a1 failed");
+    assert_eq!(GET_COLOR(a1_piece), 0);
+    assert_eq!(GET_NUM(a1_piece), 3);
+    assert_eq!(SET_WHITE(ROOK), a1_piece);
+    let a2_piece = board
+        .get_piece_at_bytes("a2".as_bytes())
+        .expect("a2 failed");
+    assert_eq!(SET_WHITE(PAWN), a2_piece);
+    let a3_piece = board
+        .get_piece_at_bytes("a3".as_bytes())
+        .expect("a3 failed");
+    assert_eq!(SET_WHITE(EMPTY), a3_piece);
+
+    let a8_piece = board
+        .get_piece_at_bytes("a8".as_bytes())
+        .expect("a8 failed");
+    assert_eq!(GET_COLOR(a8_piece), 1);
+    assert_eq!(GET_NUM(a8_piece), 3);
+    assert_eq!(SET_BLACK(ROOK), a8_piece);
+    let a7_piece = board
+        .get_piece_at_bytes("a7".as_bytes())
+        .expect("a7 failed");
+    assert_eq!(SET_BLACK(PAWN), a7_piece);
+    let a6_piece = board
+        .get_piece_at_bytes("a6".as_bytes())
+        .expect("a6 failed");
+    assert_eq!(SET_BLACK(EMPTY), a6_piece);
 
     for i in 1..=8 {
         for j in 1..=8 {
