@@ -1,7 +1,6 @@
 # FreightChess v0.1.0
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ArvinSKushwaha/FreightChess/Rust?style=for-the-badge)
-
 ![GitHub issues](https://img.shields.io/github/issues/ArvinSKushwaha/FreightChess?style=for-the-badge)
 
 A high-performance low-memory chess game "platform" for highly parallel and
