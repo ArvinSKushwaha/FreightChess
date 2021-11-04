@@ -4,23 +4,23 @@ use std::str;
 #[test]
 fn test_help() {
     let output1 = if cfg!(target_os = "windows") {
-        Command::new("target\\debug\\chess_engine.exe")
+        Command::new("target\\debug\\freight_chess.exe")
             .arg("-h")
             .output()
             .expect("Failed to execute process")
     } else {
-        Command::new("./target/debug/chess_engine")
+        Command::new("./target/debug/freight_chess")
             .arg("-h")
             .output()
             .expect("Failed to execute process")
     };
 
     let output2 = if cfg!(target_os = "windows") {
-        Command::new("target\\debug\\chess_engine.exe")
+        Command::new("target\\debug\\freight_chess.exe")
             .output()
             .expect("Failed to execute process")
     } else {
-        Command::new("./target/debug/chess_engine")
+        Command::new("./target/debug/freight_chess")
             .output()
             .expect("Failed to execute process")
     };
@@ -41,12 +41,12 @@ fn test_help() {
 #[test]
 fn test_version() {
     let output = if cfg!(target_os = "windows") {
-        Command::new("target\\debug\\chess_engine.exe -h")
+        Command::new("target\\debug\\freight_chess.exe -h")
             .arg("-V")
             .output()
             .expect("Failed to execute process")
     } else {
-        Command::new("./target/debug/chess_engine")
+        Command::new("./target/debug/freight_chess")
             .arg("-V")
             .output()
             .expect("Failed to execute process")
