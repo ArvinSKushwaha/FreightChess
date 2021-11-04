@@ -27,5 +27,5 @@ All tests are run through the `cargo-test` utility, and can be run with the
 following command:
 
 ```bash
-$ cargo test
+cargo test
 ```
