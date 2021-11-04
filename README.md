@@ -1,4 +1,4 @@
-# FreightChess
+# FreightChess v0.1.0
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ArvinSKushwaha/FreightChess/Rust?style=for-the-badge)
 
